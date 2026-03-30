@@ -19,7 +19,7 @@ async function startServer() {
     },
   });
 
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   // Game Rooms
   const rooms = new Map<string, GameState>();
@@ -62,8 +62,9 @@ async function startServer() {
       gameState.players.push(newPlayer);
       
       // Auto-start if 2 or more players
-      if (gameState.players.length >= 2) {
+      if (gameState.players.length >= 2 && !gameState.isStarted) {
         gameState.isStarted = true;
+        io.to(roomId).emit("chatMessage", { user: "System", text: "🎮 Game started! Good luck!" });
       }
 
       io.to(roomId).emit("gameStateUpdate", gameState);
@@ -154,9 +155,13 @@ async function startServer() {
     });
 
     socket.on("rematch", () => {
+      console.log("Rematch requested in room:", currentRoomId);
       if (!currentRoomId) return;
       const gameState = rooms.get(currentRoomId);
-      if (!gameState || !gameState.isGameOver) return;
+      if (!gameState || !gameState.isGameOver) {
+        console.log("Rematch ignored: game not over or room not found");
+        return;
+      }
 
       // Reset game state but keep players
       gameState.players.forEach(p => p.position = 1);
@@ -169,6 +174,7 @@ async function startServer() {
 
       io.to(currentRoomId).emit("gameStateUpdate", gameState);
       io.to(currentRoomId).emit("chatMessage", { user: "System", text: "🔄 Game restarted! Good luck!" });
+      console.log("Game restarted in room:", currentRoomId);
     });
 
     socket.on("disconnect", () => {
