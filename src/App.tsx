@@ -11,7 +11,7 @@ import Board from "./components/Board.tsx";
 import PlayerToken from "./components/PlayerToken.tsx";
 import Dice from "./components/Dice.tsx";
 import { soundManager } from "./lib/sounds.ts";
-import { Dice5, MessageSquare, Users, Trophy, LogIn, Volume2, VolumeX, Share2, Copy, Check, X } from "lucide-react";
+import { Dice5, MessageSquare, Users, Trophy, LogIn, Volume2, VolumeX, Share2, Copy, Check, X, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io();
@@ -110,6 +110,12 @@ export default function App() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  useEffect(() => {
+    if (gameState?.isGameOver) {
+      soundManager.play("win");
+    }
+  }, [gameState?.isGameOver]);
 
   const handleRoll = () => {
     if (gameState && gameState.players[gameState.turnIndex]?.id === socket.id && !gameState.isGameOver) {
@@ -332,6 +338,33 @@ export default function App() {
                 lastMove={gameState.lastMove?.playerId === p.id ? gameState.lastMove : null}
               />
             ))}
+
+            {/* Game Over Overlay */}
+            <AnimatePresence>
+              {gameState?.isGameOver && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="absolute inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm rounded-xl"
+                >
+                  <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl text-center border-4 border-amber-400 max-w-xs w-full">
+                    <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                      <Trophy className="w-10 h-10 text-amber-600" />
+                    </div>
+                    <h2 className="text-3xl font-black text-slate-900 mb-1 tracking-tight">WINNER!</h2>
+                    <p className="text-xl font-bold text-amber-600 mb-6">{gameState.winner?.name}</p>
+                    <button
+                      onClick={() => socket.emit("rematch")}
+                      className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-black rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95 group"
+                    >
+                      <RotateCcw className="w-6 h-6 group-hover:rotate-180 transition-transform duration-500" />
+                      REMATCH
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="w-full max-w-[550px] bg-white p-4 sm:p-6 rounded-[2rem] shadow-xl flex items-center justify-between gap-4 border border-slate-200">
