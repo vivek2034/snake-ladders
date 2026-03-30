@@ -1,0 +1,5 @@
+{
+  "name": "Snakes & Ladders Multiplayer",
+  "description": "A real-time multiplayer Snakes and Ladders game with GSAP animations and server-side logic.",
+  "requestFramePermissions": []
+}
